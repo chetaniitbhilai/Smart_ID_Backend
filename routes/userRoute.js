@@ -9,6 +9,4 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.post('/verify-otp', verifyOtp);  // <-- This is the new route
 
-
-
 export default router;

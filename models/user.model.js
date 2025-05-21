@@ -7,8 +7,14 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     name: String,
     department: String,
-    rollNumber: String,
+    studentId: String,
     isVerified: { type: Boolean, default: false },
+    role: { 
+    type: String, 
+    enum: ['student', 'professor' ,'ta'],
+    },
+    professorId: String,
+    taId: String,
     otp: String,
     otpExpires: Date
 });

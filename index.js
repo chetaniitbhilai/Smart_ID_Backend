@@ -4,7 +4,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors"; // Import the cors package
 import connectToMongoDB from "./db/connectToMongoDB.js";
 import userRoutes from "./routes/userRoute.js";
-
+import courseRoutes from "./routes/courseRoute.js"
+import attendanceRoutes from "./routes/attendanceRoute.js"
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -15,7 +16,7 @@ console.log("PORT:", process.env.PORT);
 const PORT = process.env.PORT || 5000; // Use port from env file, else default to 5000
 
 const app = express(); // Creating a server
-
+app.use(express.static('public')); 
 // // Enable CORS for all routes
 // app.use(cors({
 //     origin: 'http://localhost:5173', // Replace with your frontend's URL
@@ -28,6 +29,8 @@ app.use(cookieParser()); // Access cookies
 
 // Setting up routes
 app.use("/api/auth", userRoutes);
+app.use("/course", courseRoutes);
+app.use("/attendance", attendanceRoutes)
 
 // Start the server and connect to MongoDB
 app.listen(PORT, () => {

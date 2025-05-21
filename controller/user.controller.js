@@ -7,7 +7,7 @@ import crypto from "crypto"
 
 export const signup = async (req, res) => {
     try {
-        const { email, password, confirmPassword, name, department, rollNumber } = req.body;
+        const { email, password, confirmPassword, name, department, studentId , role , professorId, taId } = req.body;
 
         if (password !== confirmPassword) {
             return res.status(400).json({ error: "Passwords don't match." });
@@ -30,7 +30,10 @@ export const signup = async (req, res) => {
             password: hashedPassword,
             name,
             department,
-            rollNumber,
+            studentId, 
+            role, 
+            professorId,
+            taId,
             otp,
             otpExpires,
             isVerified: false
@@ -67,7 +70,6 @@ export const login = async (req, res) => {
       email: user.email,
       name: user.name,
       department: user.department,
-      rollNumber: user.rollNumber,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
