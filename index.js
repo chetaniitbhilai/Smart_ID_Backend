@@ -6,6 +6,10 @@ import connectToMongoDB from "./db/connectToMongoDB.js";
 import userRoutes from "./routes/userRoute.js";
 import courseRoutes from "./routes/courseRoute.js"
 import attendanceRoutes from "./routes/attendanceRoute.js"
+import complainRoutes from "./routes/complainRoutes.js"
+
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -28,9 +32,11 @@ app.use(express.json()); // Parse incoming requests with JSON payloads
 app.use(cookieParser()); // Access cookies
 
 // Setting up routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", userRoutes);
 app.use("/course", courseRoutes);
 app.use("/attendance", attendanceRoutes)
+app.use("/complain", complainRoutes)
 
 // Start the server and connect to MongoDB
 app.listen(PORT, () => {

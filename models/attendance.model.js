@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema({
-  coursecode: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
-  studentId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  coursecode: { type: mongoose.Schema.Types.ObjectId, ref: 'courses' },
+  studentId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   date: Date,
   isHoliday: Boolean,
 });

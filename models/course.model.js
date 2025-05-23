@@ -5,11 +5,11 @@ import express from 'express'
 const courseSchema = new mongoose.Schema({
   course: { type: String, required: true, unique: true },
   coursecode: { type: String, required: true, unique: true },
-  professorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  professorId: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
   department: String,
   semester: String,
-  studentId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  taId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  studentId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
+  taId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   slots: Array
 });
 

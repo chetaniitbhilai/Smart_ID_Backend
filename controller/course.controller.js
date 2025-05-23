@@ -1,4 +1,5 @@
 import Course from '../models/course.model.js';
+import User from '../models/user.model.js';
 
 export const add_course = async (req, res) => {
   try {
@@ -49,5 +50,35 @@ export const add_course = async (req, res) => {
   } catch (error) {
     console.error("Error adding course:", error);
     res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+export const get_courses = async (req, res) => {
+  try {
+    const { studentId } = req.body;
+
+    if (!studentId) {
+      return res.status(400).json({ error: "Student ID is required" });
+    }
+
+    // Find courses where studentId matches
+    const courses = await Course.find({ studentId: studentId })
+      .populate('professorId', 'name') // only get professor name
+      .populate('taId', 'name');       // get TA names
+
+    // Transform response to include only required fields
+    const result = courses.map(course => ({
+      courseName: course.course,
+      courseCode: course.coursecode,
+      professorName: course.professorId?.name || null,
+      taNames: course.taId.map(ta => ta.name)
+    }));
+
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.log("Error fetching student courses:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

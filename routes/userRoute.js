@@ -1,5 +1,5 @@
 import express from "express";
-import { login, logout, signup, verifyOtp } from "../controller/user.controller.js"; // .js is important here
+import { login, logout, signup, verifyOtp ,profile } from "../controller/user.controller.js"; // .js is important here
 
 const router = express.Router();
 
@@ -8,5 +8,6 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
 router.post('/verify-otp', verifyOtp);  // <-- This is the new route
+router.get('/profile', profile)
 
 export default router;
