@@ -22,10 +22,10 @@ const PORT = process.env.PORT || 5000; // Use port from env file, else default t
 const app = express(); // Creating a server
 app.use(express.static('public')); 
 // // Enable CORS for all routes
-// app.use(cors({
-//     origin: 'http://localhost:5173', // Replace with your frontend's URL
-//     credentials: true, // Enable cookies and other credentials if needed
-// }));
+app.use(cors({
+    origin: 'http://localhost:3000', // Replace with your frontend's URL
+    credentials: true, // Enable cookies and other credentials if needed
+}));
 
 // Setting up middleware
 app.use(express.json()); // Parse incoming requests with JSON payloads
