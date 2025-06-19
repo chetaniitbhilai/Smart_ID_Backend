@@ -56,7 +56,8 @@ export const add_course = async (req, res) => {
 
 export const get_courses = async (req, res) => {
   try {
-    const { studentId } = req.body;
+    const { studentId } = req.query.userId;
+
 
     if (!studentId) {
       return res.status(400).json({ error: "Student ID is required" });
