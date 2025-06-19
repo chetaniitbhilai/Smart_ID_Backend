@@ -56,7 +56,7 @@ export const add_course = async (req, res) => {
 
 export const get_courses = async (req, res) => {
   try {
-    const { studentId } = req.query.userId;
+    const studentId = req.query.userId;
 
 
     if (!studentId) {
@@ -73,7 +73,7 @@ export const get_courses = async (req, res) => {
       courseName: course.course,
       courseCode: course.coursecode,
       professorName: course.professorId?.name || null,
-      taNames: course.taId.map(ta => ta.name)
+      taNames: course.taId?.map(ta => ta.name) || []
     }));
 
     res.status(200).json(result);
