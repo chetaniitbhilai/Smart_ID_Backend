@@ -1,0 +1,71 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #111827; /* slate-900 */
+  background-color: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Force light theme */
+
+.app-container { max-width: 960px; margin: 0 auto; padding: 24px; }
+.app-header { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+.nav a { margin-left: 12px; text-decoration: none; color: #2563eb; }
+.nav a.active { font-weight: 700; color: #1f2937; }
+.app-main { min-height: 60vh; }
+
+.auth-container { max-width: 420px; margin: 40px auto; }
+.auth-form { display: grid; gap: 12px; }
+.auth-form label { display: grid; gap: 6px; font-size: 14px; }
+.auth-form input, .auth-form select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
+.auth-form button { margin-top: 8px; padding: 10px 14px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; }
+.auth-form button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+.courses-list { display: grid; gap: 16px; margin: 16px 0; }
+.course-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #f9fafb; }
+.course-item h3 { margin: 0 0 8px 0; color: #1f2937; }
+.course-item p { margin: 4px 0; color: #6b7280; }
+.add-course-link { display: inline-block; padding: 8px 16px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; }
+.add-course-link:hover { background: #1d4ed8; }

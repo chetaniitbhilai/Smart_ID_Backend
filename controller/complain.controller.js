@@ -1,20 +1,38 @@
 import Complain from '../models/complain.model.js';
+import Course from '../models/course.model.js';
+import User from '../models/user.model.js';
 
 export const add_complain = async (req, res) => {
   try {
-    const { coursecode, studentId, taId, complain, status, response, date } = req.body;
+    const { coursecode, studentId, taName, complain, status, response, date } = req.body;
+
+    // Validate that the course code exists
+    const course = await Course.findOne({ coursecode: coursecode });
+    if (!course) {
+      return res.status(400).json({ error: "Invalid course code" });
+    }
+
+    // Validate that the TA name exists (if provided)
+    if (taName && taName.trim() !== '') {
+      const ta = await User.findOne({ name: taName, role: 'ta' });
+      if (!ta) {
+        return res.status(400).json({ error: "Invalid TA name" });
+      }
+    }
 
     const newComplain = new Complain({
       coursecode,
       studentId,
-      taId,
+      taName: taName || '',
       complain,
       status,
       response,
       date
     });
 
+    console.log('add_complain - saving complaint with taName:', taName || '');
     await newComplain.save();
+    console.log('add_complain - complaint saved successfully');
 
     res.status(201).json({ message: "Complain submitted successfully" });
   } catch (error) {
@@ -26,17 +44,18 @@ export const add_complain = async (req, res) => {
 
 export const get_complain = async (req, res) => {
   try {
-    const { taId } = req.body;
+    const { taName } = req.query;
+    console.log('get_complain - taName from query:', taName);
 
-    if (!taId) {
-      return res.status(400).json({ error: "taId query parameter is required" });
+    if (!taName) {
+      return res.status(400).json({ error: "taName query parameter is required" });
     }
 
-    const complaints = await Complain.find({ taId: taId })
+    const complaints = await Complain.find({ taName: taName })
       .populate('studentId', 'name email') // Populate student details
-      .populate('coursecode', 'course coursecode') // Populate course details
       .populate('date', 'date'); // Populate attendance date
 
+    console.log('get_complain - found complaints:', complaints.length);
     res.status(200).json({ complaints });
   } catch (error) {
     console.error("Error fetching complaints for TA:", error.message);

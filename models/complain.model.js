@@ -3,9 +3,9 @@ import express, { response } from 'express'
 
 // models/Course.js
 const complainSchema = new mongoose.Schema({
-  coursecode: { type: mongoose.Schema.Types.ObjectId, ref: 'courses' },
+  coursecode: { type: String, required: true },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
-  taId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
+  taName: { type: String, default: '' },
   complain: String,
   status: Boolean,
   response: String,
