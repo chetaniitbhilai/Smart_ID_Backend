@@ -57,30 +57,66 @@ add_course = async (req, res) => {
 
 export const get_courses = async (req, res) => {
   try {
-    const studentId = req.query.userId;
+    const userId = req.query.userId;
+    const userRole = req.query.role; // Get user role from query params
 
+    console.log("Fetching courses for:", { userId, userRole });
 
-    if (!studentId) {
-      return res.status(400).json({ error: "Student ID is required" });
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
-    // Find courses where studentId matches
-    const courses = await Course.find({ studentId: studentId })
-      .populate('professorId', 'name') // only get professor name
-      .populate('taId', 'name');       // get TA names
+    let courses;
+    let result;
 
-    // Transform response to include only required fields
-    const result = courses.map(course => ({
-      courseName: course.course,
-      courseCode: course.coursecode,
-      professorName: course.professorId?.name || null,
-      taNames: course.taId?.map(ta => ta.name) || []
-    }));
+    if (userRole === 'professor') {
+      // For professors: get courses they are teaching
+      console.log("Fetching courses for professor with ID:", userId);
+      courses = await Course.find({ professorId: userId })
+        .populate('studentId', 'name studentId email') // get enrolled students
+        .populate('taId', 'name taId email'); // get TAs
 
+      console.log("Found courses for professor:", courses.length);
+
+      result = courses.map(course => ({
+        _id: course._id,
+        courseName: course.course,
+        courseCode: course.coursecode,
+        department: course.department,
+        semester: course.semester,
+        slots: course.slots || [],
+        enrolledStudents: course.studentId?.length || 0,
+        studentDetails: course.studentId || [],
+        taDetails: course.taId || [],
+        createdAt: course.createdAt
+      }));
+
+    } else {
+      // For students/TAs: get courses they are enrolled in
+      console.log("Fetching courses for student/TA with ID:", userId);
+      courses = await Course.find({ studentId: userId })
+        .populate('professorId', 'name') // only get professor name
+        .populate('taId', 'name');       // get TA names
+
+      console.log("Found courses for student/TA:", courses.length);
+
+      result = courses.map(course => ({
+        _id: course._id,
+        courseName: course.course,
+        courseCode: course.coursecode,
+        professorName: course.professorId?.name || null,
+        taNames: course.taId?.map(ta => ta.name) || [],
+        department: course.department,
+        semester: course.semester,
+        slots: course.slots || []
+      }));
+    }
+
+    console.log("Returning courses:", result.length);
     res.status(200).json(result);
 
   } catch (error) {
-    console.log("Error fetching student courses:", error.message);
+    console.log("Error fetching courses:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -131,6 +167,28 @@ export const register_student = async (req, res) => {
     res.status(200).json({ message: 'Registered successfully' });
   } catch (error) {
     console.error('Error registering student in course:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const get_course_students = async (req, res) => {
+  try {
+    const { coursecode } = req.query;
+    if (!coursecode) {
+      return res.status(400).json({ error: 'coursecode is required' });
+    }
+
+    const course = await Course.findOne({ coursecode })
+      .populate('studentId', 'name studentId email');
+    
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    const students = course.studentId || [];
+    res.status(200).json({ students });
+  } catch (error) {
+    console.error('Error fetching course students:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

@@ -10,18 +10,41 @@ export const add_attendance = async (req, res) => {
       return res.status(400).json({ message: "coursecode and date are required" });
     }
 
-    const newAttendance = new Attendance({
-      coursecode,
-      studentId,
-      date: new Date(date),
-      isHoliday: isHoliday || false
+    // Find course by coursecode to get the ObjectId
+    const course = await Course.findOne({ coursecode });
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    const courseObjectId = course._id;
+    const studentObjectId = new mongoose.Types.ObjectId(studentId);
+
+    // Check if attendance record already exists for this date and course
+    let attendance = await Attendance.findOne({
+      coursecode: courseObjectId,
+      date: new Date(date)
     });
 
-    await newAttendance.save();
+    if (attendance) {
+      // If attendance record exists, add student to the list if not already present
+      if (!attendance.studentId.includes(studentObjectId)) {
+        attendance.studentId.push(studentObjectId);
+        await attendance.save();
+      }
+    } else {
+      // Create new attendance record
+      attendance = new Attendance({
+        coursecode: courseObjectId,
+        studentId: [studentObjectId],
+        date: new Date(date),
+        isHoliday: isHoliday || false
+      });
+      await attendance.save();
+    }
 
     res.status(201).json({
       message: "Attendance recorded successfully",
-      attendance: newAttendance
+      attendance: attendance
     });
   } catch (error) {
     console.error("Error recording attendance:", error);
@@ -68,8 +91,8 @@ export const update_attendance = async (req, res) => {
   try {
     const { coursecode, taId, studentId, date } = req.body;
 
-    if (!coursecode || !taId || !studentId || !date) {
-      return res.status(400).json({ error: "coursecode, taId, studentId, and date are required" });
+    if (!coursecode || !studentId || !date) {
+      return res.status(400).json({ error: "coursecode, studentId, and date are required" });
     }
 
     // Find course by coursecode
@@ -79,30 +102,97 @@ export const update_attendance = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Check if taId is assigned to this course
-    if (!course.taId.includes(taId)) {
-      return res.status(403).json({ error: "TA not authorized for this course" });
+    const courseObjectId = course._id;
+    const studentObjectId = new mongoose.Types.ObjectId(studentId);
+
+    // If taId is provided, check authorization
+    if (taId && course.taId && course.taId.length > 0) {
+      const taObjectId = new mongoose.Types.ObjectId(taId);
+      if (!course.taId.includes(taObjectId)) {
+        return res.status(403).json({ error: "TA not authorized for this course" });
+      }
     }
 
-    // Find or create attendance document
-    const attendance = await Attendance.findOneAndUpdate(
-      {
-        coursecode: course._id,
-        date: new Date(date)
-      },
-      {
-        $addToSet: { studentId: studentId }
-      },
-      {
-        new: true,
-        upsert: true,
-        setDefaultsOnInsert: true
-      }
-    );
+    // Find existing attendance record for this date and course
+    let attendance = await Attendance.findOne({
+      coursecode: courseObjectId,
+      date: new Date(date)
+    });
+
+    if (attendance) {
+      // Remove student from attendance (mark as absent)
+      attendance.studentId = attendance.studentId.filter(
+        id => !id.equals(studentObjectId)
+      );
+      await attendance.save();
+    } else {
+      // Create new attendance record with empty student list (for absent students)
+      attendance = new Attendance({
+        coursecode: courseObjectId,
+        studentId: [],
+        date: new Date(date),
+        isHoliday: false
+      });
+      await attendance.save();
+    }
 
     res.status(200).json({ message: "Attendance updated", attendance });
   } catch (error) {
     console.error("Error updating attendance:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const bulk_attendance = async (req, res) => {
+  try {
+    const { coursecode, studentIds, date, isHoliday } = req.body;
+
+    if (!coursecode || !studentIds || !date) {
+      return res.status(400).json({ error: "coursecode, studentIds, and date are required" });
+    }
+
+    // Find course by coursecode to get the ObjectId
+    const course = await Course.findOne({ coursecode });
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    const courseObjectId = course._id;
+    const studentObjectIds = studentIds.map(id => new mongoose.Types.ObjectId(id));
+
+    // Check if attendance record already exists for this date and course
+    let attendance = await Attendance.findOne({
+      coursecode: courseObjectId,
+      date: new Date(date)
+    });
+
+    if (attendance) {
+      // If attendance record exists, add all students to the list
+      const existingStudentIds = attendance.studentId.map(id => id.toString());
+      const newStudentIds = studentObjectIds.filter(id => !existingStudentIds.includes(id.toString()));
+      
+      if (newStudentIds.length > 0) {
+        attendance.studentId.push(...newStudentIds);
+        await attendance.save();
+      }
+    } else {
+      // Create new attendance record with all students
+      attendance = new Attendance({
+        coursecode: courseObjectId,
+        studentId: studentObjectIds,
+        date: new Date(date),
+        isHoliday: isHoliday || false
+      });
+      await attendance.save();
+    }
+
+    res.status(201).json({
+      message: "Bulk attendance recorded successfully",
+      attendance: attendance,
+      studentsMarked: studentObjectIds.length
+    });
+  } catch (error) {
+    console.error("Error recording bulk attendance:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
