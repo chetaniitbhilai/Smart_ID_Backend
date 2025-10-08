@@ -23,8 +23,14 @@ const app = express(); // Creating a server
 app.use(express.static('public')); 
 // // Enable CORS for all routes
 app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your frontend's URL
-    credentials: true, // Enable cookies and other credentials if needed
+    origin: (origin, callback) => {
+        // Allow localhost dev origins (3000-5199) and undefined (like Postman)
+        if (!origin || /http:\/\/localhost:(3\d{3}|5(0|1)\d{2})$/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
 }));
 
 // Setting up middleware

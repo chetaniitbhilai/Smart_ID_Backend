@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import PendingUser from "../models/pendingUser.model.js";
 import bcryptjs from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 
@@ -13,10 +14,11 @@ export const signup = async (req, res) => {
             return res.status(400).json({ error: "Passwords don't match." });
         }
 
+        // Check both confirmed users and pending users
         const existingUser = await User.findOne({ email });
-        console.log(existingUser)
-        if (existingUser) {
-            return res.status(400).json({ error: "User already exists." });
+        const existingPending = await PendingUser.findOne({ email });
+        if (existingUser || existingPending) {
+            return res.status(400).json({ error: "User already exists or pending verification." });
         }
 
         const salt = await bcryptjs.genSalt(10);
@@ -25,21 +27,20 @@ export const signup = async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // expires in 10 mins
 
-        const newUser = new User({
+        const pending = new PendingUser({
             email,
             password: hashedPassword,
             name,
             department,
-            studentId, 
-            role, 
+            studentId,
+            role,
             professorId,
             taId,
             otp,
             otpExpires,
-            isVerified: false
         });
 
-        await newUser.save();
+        await pending.save();
 
         await sendEmail(email, "Verify your email", `Your OTP is: ${otp}`);
 
@@ -61,8 +62,7 @@ export const login = async (req, res) => {
     const isMatch = await bcryptjs.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
 
-    if (!user.isVerified)
-      return res.status(403).json({ error: "Email not verified. Please verify OTP." });
+    // Allow login regardless of OTP verification status
 
     generateTokenAndSetCookie(user._id, res);
     res.status(200).json({
@@ -70,6 +70,10 @@ export const login = async (req, res) => {
       email: user.email,
       name: user.name,
       department: user.department,
+      role: user.role,
+      studentId: user.studentId,
+      professorId: user.professorId,
+      taId: user.taId,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
@@ -93,27 +97,35 @@ export const verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ error: "Invalid email." });
+        // First, check pending users
+        const pending = await PendingUser.findOne({ email });
+        if (!pending) {
+            return res.status(400).json({ error: "No pending signup found for this email." });
         }
 
-        if (user.isVerified) {
-            return res.status(400).json({ error: "Email already verified." });
-        }
-
-        if (user.otp !== otp || user.otpExpires < Date.now()) {
+        if (pending.otp !== otp || pending.otpExpires < Date.now()) {
             return res.status(400).json({ error: "Invalid or expired OTP." });
         }
 
-        user.isVerified = true;
-        user.otp = undefined;
-        user.otpExpires = undefined;
-        await user.save();
+        // Create confirmed user from pending
+        const createdUser = await User.create({
+            email: pending.email,
+            password: pending.password,
+            name: pending.name,
+            department: pending.department,
+            studentId: pending.studentId,
+            role: pending.role,
+            professorId: pending.professorId,
+            taId: pending.taId,
+            isVerified: true,
+        });
 
-        generateTokenAndSetCookie(user._id, res); // if you want to log in directly
+        // Remove pending record
+        await PendingUser.deleteOne({ _id: pending._id });
 
-        res.status(200).json({ message: "Email verified successfully." });
+        generateTokenAndSetCookie(createdUser._id, res);
+
+        res.status(200).json({ message: "Email verified successfully.", _id: createdUser._id, role: createdUser.role });
     } catch (error) {
         console.log("Error in verifyOtp controller", error.message);
         res.status(500).json({ error: "Internal server error" });
@@ -123,16 +135,23 @@ export const verifyOtp = async (req, res) => {
 
 export const profile = async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+    // Get user ID from JWT token (set by auth middleware)
+    const userId = req.user?.id || req.user?._id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    if (!user) return res.status(400).json({ error: "Invalid credentials" });
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(400).json({ error: "User not found" });
 
     const response = {
       _id: user._id,
       email: user.email,
       name: user.name,
       department: user.department,
+      role: user.role,
     };
 
     if (user.role === "student") {
@@ -144,7 +163,7 @@ export const profile = async (req, res) => {
     }
     res.status(200).json(response);
   } catch (error) {
-    console.log("Error in login controller", error.message);
+    console.log("Error in profile controller", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

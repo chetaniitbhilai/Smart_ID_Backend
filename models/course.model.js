@@ -10,7 +10,12 @@ const courseSchema = new mongoose.Schema({
   semester: String,
   studentId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
   taId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
-  slots: Array
+  // Slots now structured as day + start/end times
+  slots: [{
+    day: { type: String, enum: ['sun','mon','tue','wed','thu','fri','sat'], required: true },
+    start: { type: String, required: true }, // e.g., "10:00"
+    end: { type: String, required: true }    // e.g., "11:00"
+  }]
 });
 
 

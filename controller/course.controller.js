@@ -1,7 +1,8 @@
 import Course from '../models/course.model.js';
 import User from '../models/user.model.js';
 
-export const add_course = async (req, res) => {
+export const 
+add_course = async (req, res) => {
   try {
     const {
       course,
@@ -81,5 +82,55 @@ export const get_courses = async (req, res) => {
   } catch (error) {
     console.log("Error fetching student courses:", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const get_upcoming = async (req, res) => {
+  try {
+    const { studentId, professorId } = req.query;
+    if (!studentId && !professorId) {
+      return res.status(400).json({ error: "studentId or professorId is required" });
+    }
+
+    const filter = studentId ? { studentId } : { professorId };
+    const courses = await Course.find(filter).select('course coursecode slots');
+    const result = courses.map(c => ({
+      courseName: c.course,
+      courseCode: c.coursecode,
+      slots: Array.isArray(c.slots) ? c.slots : [],
+    }));
+
+    res.status(200).json({ upcoming: result });
+  } catch (error) {
+    console.error("Error fetching upcoming classes:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const register_student = async (req, res) => {
+  try {
+    const { coursecode, studentId } = req.body;
+    if (!coursecode || !studentId) {
+      return res.status(400).json({ error: 'coursecode and studentId are required' });
+    }
+
+    const course = await Course.findOne({ coursecode });
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    const alreadyEnrolled = course.studentId?.some((id) => String(id) === String(studentId));
+    if (alreadyEnrolled) {
+      return res.status(200).json({ message: 'Already registered' });
+    }
+
+    course.studentId = Array.isArray(course.studentId) ? course.studentId : [];
+    course.studentId.push(studentId);
+    await course.save();
+
+    res.status(200).json({ message: 'Registered successfully' });
+  } catch (error) {
+    console.error('Error registering student in course:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
