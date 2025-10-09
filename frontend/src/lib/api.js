@@ -46,10 +46,11 @@ export function addCourse(payload) {
   return request('/course/add_course', { method: 'POST', body: JSON.stringify(payload) })
 }
 
-export function getUpcoming({ studentId, professorId } = {}) {
+export function getUpcoming({ studentId, professorId, taId } = {}) {
   const params = new URLSearchParams()
   if (studentId) params.set('studentId', studentId)
   if (!studentId && professorId) params.set('professorId', professorId)
+  if (!studentId && !professorId && taId) params.set('taId', taId)
   const qp = params.toString() ? `?${params.toString()}` : ''
   return request(`/course/upcoming${qp}`, { method: 'GET' })
 }

@@ -59,9 +59,14 @@ function App() {
             )}
             {localStorage.getItem('userId') && (
               <>
-                <Link to="/courses" className={location.pathname.startsWith('/courses') ? 'active' : ''}>Courses</Link>
+                {localStorage.getItem('userRole') === 'student' ? (
+                  <Link to="/courses" className={location.pathname.startsWith('/courses') ? 'active' : ''}>Dashboard</Link>
+                ) : (
+                  <Link to="/courses" className={location.pathname.startsWith('/courses') ? 'active' : ''}>Courses</Link>
+                )}
                 {localStorage.getItem('userRole') === 'student' && (
                   <>
+                    <Link to="/courses/register" className={location.pathname === '/courses/register' ? 'active' : ''}>Register Course</Link>
                     <Link to="/complain" className={location.pathname === '/complain' ? 'active' : ''}>Complain</Link>
                     <Link to="/attendance/check" className={location.pathname === '/attendance/check' ? 'active' : ''}>My Attendance</Link>
                   </>

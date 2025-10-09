@@ -21,7 +21,13 @@ function Login() {
     e.preventDefault()
     const result = await login(username, password)
     if (result) {
-      navigate('/upcomingclasses')
+      // Redirect based on user role
+      const userRole = localStorage.getItem('userRole')
+      if (userRole === 'student') {
+        navigate('/courses')
+      } else {
+        navigate('/upcomingclasses')
+      }
     }
   }
 

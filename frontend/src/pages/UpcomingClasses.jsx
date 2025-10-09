@@ -16,7 +16,15 @@ function UpcomingClasses() {
           setError('Please login first')
           return
         }
-        const res = await getUpcoming(role === 'professor' ? { professorId: userId } : { studentId: userId })
+        let params = {}
+        if (role === 'professor') {
+          params = { professorId: userId }
+        } else if (role === 'ta') {
+          params = { taId: userId }
+        } else {
+          params = { studentId: userId }
+        }
+        const res = await getUpcoming(params)
         const list = Array.isArray(res?.upcoming) ? res.upcoming : []
         if (mounted) setItems(list)
       } catch (e) {

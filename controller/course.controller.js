@@ -91,14 +91,37 @@ export const get_courses = async (req, res) => {
         createdAt: course.createdAt
       }));
 
+    } else if (userRole === 'ta') {
+      // For TAs: get courses they are TAing for
+      console.log("Fetching courses for TA with ID:", userId);
+      courses = await Course.find({ taId: userId })
+        .populate('professorId', 'name') // get professor name
+        .populate('studentId', 'name studentId email') // get enrolled students
+        .populate('taId', 'name taId email'); // get other TAs
+
+      console.log("Found courses for TA:", courses.length);
+
+      result = courses.map(course => ({
+        _id: course._id,
+        courseName: course.course,
+        courseCode: course.coursecode,
+        professorName: course.professorId?.name || null,
+        taNames: course.taId?.map(ta => ta.name) || [],
+        department: course.department,
+        semester: course.semester,
+        slots: course.slots || [],
+        enrolledStudents: course.studentId?.length || 0,
+        studentDetails: course.studentId || []
+      }));
+
     } else {
-      // For students/TAs: get courses they are enrolled in
-      console.log("Fetching courses for student/TA with ID:", userId);
+      // For students: get courses they are enrolled in
+      console.log("Fetching courses for student with ID:", userId);
       courses = await Course.find({ studentId: userId })
         .populate('professorId', 'name') // only get professor name
         .populate('taId', 'name');       // get TA names
 
-      console.log("Found courses for student/TA:", courses.length);
+      console.log("Found courses for student:", courses.length);
 
       result = courses.map(course => ({
         _id: course._id,
@@ -123,12 +146,20 @@ export const get_courses = async (req, res) => {
 
 export const get_upcoming = async (req, res) => {
   try {
-    const { studentId, professorId } = req.query;
-    if (!studentId && !professorId) {
-      return res.status(400).json({ error: "studentId or professorId is required" });
+    const { studentId, professorId, taId } = req.query;
+    if (!studentId && !professorId && !taId) {
+      return res.status(400).json({ error: "studentId, professorId, or taId is required" });
     }
 
-    const filter = studentId ? { studentId } : { professorId };
+    let filter;
+    if (studentId) {
+      filter = { studentId };
+    } else if (professorId) {
+      filter = { professorId };
+    } else if (taId) {
+      filter = { taId };
+    }
+
     const courses = await Course.find(filter).select('course coursecode slots');
     const result = courses.map(c => ({
       courseName: c.course,

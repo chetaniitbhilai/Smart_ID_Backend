@@ -95,14 +95,14 @@ function Courses() {
       <div className="courses-container">
         <div className="courses-header">
           <h1>My Courses</h1>
-          <p>Courses you are enrolled in</p>
+          <p>{userRole === 'ta' ? 'Courses you are TAing for' : 'Courses you are enrolled in'}</p>
         </div>
 
         {courses.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📚</div>
-            <h3>No Courses Enrolled</h3>
-            <p>You haven't enrolled in any courses yet.</p>
+            <h3>{userRole === 'ta' ? 'No Courses Assigned' : 'No Courses Enrolled'}</h3>
+            <p>{userRole === 'ta' ? 'You haven\'t been assigned to any courses yet.' : 'You haven\'t enrolled in any courses yet.'}</p>
           </div>
         ) : (
           <div className="courses-grid">
@@ -124,6 +124,12 @@ function Courses() {
                     <div className="detail-item">
                       <span className="detail-label">TAs:</span>
                       <span className="detail-value">{course.taNames.join(', ')}</span>
+                    </div>
+                  )}
+                  {userRole === 'ta' && course.enrolledStudents !== undefined && (
+                    <div className="detail-item">
+                      <span className="detail-label">Enrolled Students:</span>
+                      <span className="detail-value">{course.enrolledStudents}</span>
                     </div>
                   )}
                 </div>
